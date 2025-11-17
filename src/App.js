@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from './contexts/AppContext';
 import Dashboard from './pages/Dashboard';
 import PodManagement from './pages/PodManagement';
@@ -7,14 +7,21 @@ import SelfAssessment from './pages/SelfAssessment';
 import TeacherGrading from './pages/TeacherGrading';
 import ImportExport from './pages/ImportExport';
 import GradeCalculator from './pages/GradeCalculator';
-import { LayoutDashboard, Users, ClipboardCheck, User, GraduationCap, Upload, Calculator, Shield, ShieldOff, Lock } from 'lucide-react';
+import { VERSION, RELEASE_NAME, VERSION_HISTORY } from './version';
+import { LayoutDashboard, Users, ClipboardCheck, User, GraduationCap, Upload, Calculator, Shield, ShieldOff, Lock, Info } from 'lucide-react';
 
 function App() {
   const [activeTab, setActiveTab] = useState('self-assessment');
   const { isAdmin, setIsAdmin } = useApp();
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showVersionModal, setShowVersionModal] = useState(false);
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
+
+  // Log version on mount
+  useEffect(() => {
+    console.log(`App loaded: v${VERSION} - ${RELEASE_NAME}`);
+  }, []);
 
   // Admin password - in production, this should be handled server-side
   const ADMIN_PASSWORD = 'TSA2025';
@@ -196,6 +203,87 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Version Info Modal */}
+      {showVersionModal && (
+        <div className="modal-overlay">
+          <div className="modal" style={{ maxWidth: '600px' }}>
+            <div className="modal-header">
+              <h2>
+                <Info size={24} style={{ marginRight: '10px' }} />
+                Version Information
+              </h2>
+              <button className="close-btn" onClick={() => setShowVersionModal(false)}>&times;</button>
+            </div>
+            <div className="modal-body">
+              <div className="alert alert-success mb-4">
+                <strong>Current Version:</strong> v{VERSION} - {RELEASE_NAME}
+              </div>
+
+              <h3 style={{ marginBottom: '15px' }}>Version History</h3>
+              {VERSION_HISTORY.map((release, index) => (
+                <div key={release.version} className="card" style={{ marginBottom: '15px' }}>
+                  <div className="card-header">
+                    <strong>v{release.version}</strong> - {release.name}
+                    <span className="text-muted" style={{ float: 'right' }}>{release.date}</span>
+                  </div>
+                  <div className="card-body">
+                    <ul style={{ marginBottom: 0, paddingLeft: '20px' }}>
+                      {release.features.map((feature, i) => (
+                        <li key={i} style={{ marginBottom: '5px' }}>{feature}</li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button
+                className="btn btn-primary"
+                onClick={() => setShowVersionModal(false)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Version Footer */}
+      <footer style={{
+        marginTop: '40px',
+        padding: '20px',
+        borderTop: '1px solid #ddd',
+        textAlign: 'center',
+        color: '#666',
+        fontSize: '14px'
+      }}>
+        <div style={{ marginBottom: '8px' }}>
+          <strong>Pod Grading System</strong> | Science Ambassador Media Project
+        </div>
+        <div>
+          <button
+            onClick={() => setShowVersionModal(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#4CAF50',
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              fontSize: '14px',
+              padding: 0
+            }}
+          >
+            <Info size={14} style={{ marginRight: '4px', verticalAlign: 'middle' }} />
+            Version {VERSION}
+          </button>
+          <span style={{ margin: '0 10px' }}>|</span>
+          <span>{RELEASE_NAME}</span>
+        </div>
+        <div style={{ marginTop: '8px', fontSize: '12px', color: '#999' }}>
+          {isAdmin ? '🔓 Admin Mode Active' : '🔒 Student Mode'}
+        </div>
+      </footer>
     </div>
   );
 }
