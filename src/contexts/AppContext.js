@@ -1,5 +1,11 @@
-import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
-import { initialStudents, PERIOD_MAPPING, ROLE_QUESTIONS } from '../data/initialStudents';
+import React, { createContext, useContext, useReducer, useEffect, useState, useCallback } from 'react';
+import { initialStudents, PERIOD_MAPPING } from '../data/initialStudents';
+import {
+  saveStateToFirebase,
+  loadStateFromFirebase,
+  subscribeToStateChanges,
+  isFirebaseConfigured
+} from '../services/firebase.service';
 
 const AppContext = createContext();
 
@@ -12,8 +18,8 @@ const initializeStudents = (rawStudents) => {
     period: PERIOD_MAPPING[student.homeroom]?.period || null,
     periodName: PERIOD_MAPPING[student.homeroom]?.name || 'Unassigned',
     podNumber: null,
-    roles: [], // Changed from single role to array of roles
-    sharedRoles: {} // { roleName: [sharedWithIds] }
+    roles: [],
+    sharedRoles: {}
   }));
 };
 
@@ -26,31 +32,36 @@ const initialState = {
   currentPod: null
 };
 
+const migrateState = (state) => {
+  if (!state) return null;
+
+  // Migration: convert old single role to roles array
+  if (state.students) {
+    state.students = state.students.map(s => {
+      if (s.role && !s.roles) {
+        return {
+          ...s,
+          roles: [s.role],
+          sharedRoles: s.sharedRole ? { [s.role]: s.sharedWith || [] } : {}
+        };
+      }
+      if (!s.roles) {
+        s.roles = [];
+      }
+      if (!s.sharedRoles) {
+        s.sharedRoles = {};
+      }
+      return s;
+    });
+  }
+  return state;
+};
+
 const loadState = () => {
   try {
     const saved = localStorage.getItem('podGradingState');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      // Migration: convert old single role to roles array
-      if (parsed.students) {
-        parsed.students = parsed.students.map(s => {
-          if (s.role && !s.roles) {
-            return {
-              ...s,
-              roles: [s.role],
-              sharedRoles: s.sharedRole ? { [s.role]: s.sharedWith || [] } : {}
-            };
-          }
-          if (!s.roles) {
-            s.roles = [];
-          }
-          if (!s.sharedRoles) {
-            s.sharedRoles = {};
-          }
-          return s;
-        });
-      }
-      return parsed;
+      return migrateState(JSON.parse(saved));
     }
   } catch (error) {
     console.error('Error loading state:', error);
@@ -58,18 +69,14 @@ const loadState = () => {
   return initialState;
 };
 
-const saveState = (state) => {
-  try {
-    localStorage.setItem('podGradingState', JSON.stringify(state));
-  } catch (error) {
-    console.error('Error saving state:', error);
-  }
-};
-
 const appReducer = (state, action) => {
   let newState;
 
   switch (action.type) {
+    case 'SET_FULL_STATE':
+      newState = migrateState(action.payload) || state;
+      break;
+
     case 'IMPORT_STUDENTS':
       const importedStudents = action.payload.map(student => ({
         ...student,
@@ -190,7 +197,6 @@ const appReducer = (state, action) => {
           const periodVal = PERIOD_MAPPING[item.homeroom]?.period;
 
           if (periodVal && item.podNumber) {
-            // Handle roles - can be comma-separated string or array
             let rolesArray = [];
             if (item.roles) {
               rolesArray = Array.isArray(item.roles) ? item.roles : item.roles.split(',').map(r => r.trim());
@@ -304,7 +310,6 @@ const appReducer = (state, action) => {
       return state;
   }
 
-  saveState(newState);
   return newState;
 };
 
@@ -313,11 +318,65 @@ export const AppProvider = ({ children }) => {
   const [isAdmin, setIsAdmin] = useState(() => {
     return localStorage.getItem('podGradingAdmin') === 'true';
   });
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [useFirebase, setUseFirebase] = useState(isFirebaseConfigured());
+
+  // Load initial data from Firebase
+  useEffect(() => {
+    const loadFromFirebase = async () => {
+      if (useFirebase) {
+        setIsLoading(true);
+        try {
+          const firebaseState = await loadStateFromFirebase();
+          if (firebaseState) {
+            dispatch({ type: 'SET_FULL_STATE', payload: firebaseState });
+          }
+        } catch (error) {
+          console.error('Failed to load from Firebase:', error);
+        }
+      }
+      setIsLoading(false);
+    };
+
+    loadFromFirebase();
+  }, [useFirebase]);
+
+  // Subscribe to real-time updates from Firebase
+  useEffect(() => {
+    if (!useFirebase) return;
+
+    const unsubscribe = subscribeToStateChanges((newState) => {
+      if (newState && newState.lastUpdated) {
+        dispatch({ type: 'SET_FULL_STATE', payload: newState });
+      }
+    });
+
+    return unsubscribe;
+  }, [useFirebase]);
+
+  // Save state to Firebase when it changes
+  const saveToStorage = useCallback(async (stateToSave) => {
+    // Always save to localStorage as backup
+    localStorage.setItem('podGradingState', JSON.stringify(stateToSave));
+
+    if (useFirebase) {
+      setIsSyncing(true);
+      try {
+        await saveStateToFirebase(stateToSave);
+      } catch (error) {
+        console.error('Failed to save to Firebase:', error);
+      }
+      setIsSyncing(false);
+    }
+  }, [useFirebase]);
 
   // Auto-save on state changes
   useEffect(() => {
-    saveState(state);
-  }, [state]);
+    if (!isLoading) {
+      saveToStorage(state);
+    }
+  }, [state, isLoading, saveToStorage]);
 
   // Save admin status
   useEffect(() => {
@@ -329,6 +388,10 @@ export const AppProvider = ({ children }) => {
     dispatch,
     isAdmin,
     setIsAdmin,
+    isLoading,
+    isSyncing,
+    useFirebase,
+    setUseFirebase,
     // Helper functions
     getStudentsByPeriod: (period) => state.students.filter(s => s.period === period),
     getStudentById: (id) => state.students.find(s => s.id === id),
@@ -371,23 +434,19 @@ export const AppProvider = ({ children }) => {
         teacherPercentage = (teacherTotal / 10) * 100;
       }
 
-      // Calculate bonus for multiple roles
       const numRoles = student.roles?.length || 0;
       let bonusPoints = 0;
       let bonusPercentage = 0;
 
       if (numRoles > 1) {
-        // Each additional role adds 5 bonus percentage points (capped at 15%)
         bonusPoints = (numRoles - 1) * 5;
         bonusPercentage = Math.min(bonusPoints, 15);
       }
 
-      // Weight: 60% peer, 40% teacher + bonus
       let finalGrade = teacherGrade
         ? (peerPercentage * 0.6) + (teacherPercentage * 0.4) + bonusPercentage
         : peerPercentage + bonusPercentage;
 
-      // Cap at 110% to allow for some bonus but not unlimited
       finalGrade = Math.min(finalGrade, 110);
 
       return {
