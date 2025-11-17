@@ -17,7 +17,7 @@ function App() {
   const [loginError, setLoginError] = useState('');
 
   // Admin password - in production, this should be handled server-side
-  const ADMIN_PASSWORD = 'admin2024';
+  const ADMIN_PASSWORD = 'TSA2025';
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
