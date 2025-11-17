@@ -109,22 +109,33 @@ export const subscribeToStateChanges = (callback) => {
     return () => {};
   }
 
+  let unsubscribeFunction = null;
+  let isUnsubscribed = false;
+
   // Authenticate first, then subscribe
   ensureAuthenticated().then(() => {
+    if (isUnsubscribed) return; // Don't subscribe if already unsubscribed
+
     const stateRef = getRef('podGradingData');
 
-    onValue(stateRef, (snapshot) => {
-      if (snapshot.exists()) {
+    unsubscribeFunction = onValue(stateRef, (snapshot) => {
+      if (snapshot.exists() && !isUnsubscribed) {
         callback(snapshot.val());
       }
     }, (error) => {
       console.error('Error subscribing to Firebase:', error);
     });
+  }).catch((error) => {
+    console.error('Error authenticating for Firebase subscription:', error);
   });
 
-  const stateRef = getRef('podGradingData');
   // Return unsubscribe function
-  return () => off(stateRef);
+  return () => {
+    isUnsubscribed = true;
+    if (unsubscribeFunction) {
+      unsubscribeFunction();
+    }
+  };
 };
 
 // Check if Firebase is properly configured

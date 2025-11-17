@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from './contexts/AppContext';
+import ErrorBoundary from './components/ErrorBoundary';
 import Dashboard from './pages/Dashboard';
 import PodManagement from './pages/PodManagement';
 import PeerAssessment from './pages/PeerAssessment';
@@ -22,6 +23,15 @@ function App() {
   useEffect(() => {
     console.log(`App loaded: v${VERSION} - ${RELEASE_NAME}`);
   }, []);
+
+  // Enforce admin access restrictions - redirect if access is lost
+  useEffect(() => {
+    const currentTab = allTabs.find(t => t.id === activeTab);
+    if (currentTab?.adminOnly && !isAdmin) {
+      // User lost admin access or tried to access restricted tab, redirect to student view
+      setActiveTab('self-assessment');
+    }
+  }, [activeTab, isAdmin, allTabs]);
 
   // Admin password - in production, this should be handled server-side
   const ADMIN_PASSWORD = 'TSA2025';
@@ -58,30 +68,55 @@ function App() {
   const visibleTabs = allTabs.filter(tab => !tab.adminOnly || isAdmin);
 
   const renderContent = () => {
-    // Double-check admin access for restricted content
-    const currentTab = allTabs.find(t => t.id === activeTab);
-    if (currentTab?.adminOnly && !isAdmin) {
-      setActiveTab('self-assessment');
-      return <SelfAssessment />;
-    }
-
     switch (activeTab) {
       case 'dashboard':
-        return isAdmin ? <Dashboard /> : <SelfAssessment />;
+        return (
+          <ErrorBoundary>
+            <Dashboard />
+          </ErrorBoundary>
+        );
       case 'pods':
-        return isAdmin ? <PodManagement /> : <SelfAssessment />;
+        return (
+          <ErrorBoundary>
+            <PodManagement />
+          </ErrorBoundary>
+        );
       case 'self-assessment':
-        return <SelfAssessment />;
+        return (
+          <ErrorBoundary>
+            <SelfAssessment />
+          </ErrorBoundary>
+        );
       case 'assessment':
-        return isAdmin ? <PeerAssessment /> : <SelfAssessment />;
+        return (
+          <ErrorBoundary>
+            <PeerAssessment />
+          </ErrorBoundary>
+        );
       case 'teacher':
-        return isAdmin ? <TeacherGrading /> : <SelfAssessment />;
+        return (
+          <ErrorBoundary>
+            <TeacherGrading />
+          </ErrorBoundary>
+        );
       case 'grades':
-        return isAdmin ? <GradeCalculator /> : <SelfAssessment />;
+        return (
+          <ErrorBoundary>
+            <GradeCalculator />
+          </ErrorBoundary>
+        );
       case 'import':
-        return isAdmin ? <ImportExport /> : <SelfAssessment />;
+        return (
+          <ErrorBoundary>
+            <ImportExport />
+          </ErrorBoundary>
+        );
       default:
-        return <SelfAssessment />;
+        return (
+          <ErrorBoundary>
+            <SelfAssessment />
+          </ErrorBoundary>
+        );
     }
   };
 

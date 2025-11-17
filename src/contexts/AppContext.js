@@ -29,7 +29,20 @@ const initialState = {
   assessments: [],
   teacherGrades: {},
   currentPeriod: 1,
-  currentPod: null
+  currentPod: null,
+  // SelfAssessment form state - persisted between tab switches
+  selfAssessmentFormState: {
+    selectedStudent: null,
+    step: 'select',
+    selfScores: {},
+    selfExplanations: {},
+    biggestContribution: '',
+    biggestChallenge: '',
+    peerEvaluations: {},
+    teamWorkedWell: true,
+    participationIssues: '',
+    currentPeerIndex: 0
+  }
 };
 
 const migrateState = (state) => {
@@ -303,6 +316,34 @@ const appReducer = (state, action) => {
             { ...pod, stage: 'not_started' }
           ])
         )
+      };
+      break;
+
+    case 'UPDATE_SELF_ASSESSMENT_FORM':
+      newState = {
+        ...state,
+        selfAssessmentFormState: {
+          ...state.selfAssessmentFormState,
+          ...action.payload
+        }
+      };
+      break;
+
+    case 'RESET_SELF_ASSESSMENT_FORM':
+      newState = {
+        ...state,
+        selfAssessmentFormState: {
+          selectedStudent: null,
+          step: 'select',
+          selfScores: {},
+          selfExplanations: {},
+          biggestContribution: '',
+          biggestChallenge: '',
+          peerEvaluations: {},
+          teamWorkedWell: true,
+          participationIssues: '',
+          currentPeerIndex: 0
+        }
       };
       break;
 
