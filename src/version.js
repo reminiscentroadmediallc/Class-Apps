@@ -1,10 +1,23 @@
 // Version information for the Pod Grading System
-export const VERSION = '2.0.0';
+export const VERSION = '2.1.0';
 export const BUILD_DATE = new Date().toISOString().split('T')[0];
-export const RELEASE_NAME = 'Admin Privacy & Multi-Role Support';
+export const RELEASE_NAME = 'Tab Navigation & State Persistence Fixes';
 
 // Version history
 export const VERSION_HISTORY = [
+  {
+    version: '2.1.0',
+    date: '2024-11-17',
+    name: 'Tab Navigation & State Persistence Fixes',
+    features: [
+      'Fixed critical render-phase crash when switching tabs',
+      'Added ErrorBoundary component for graceful error handling',
+      'Form state now persists when switching between tabs',
+      'Fixed Firebase subscription cleanup to prevent memory leaks',
+      'Fixed state migration for old data from localStorage/Firebase',
+      'Improved data validation on app load'
+    ]
+  },
   {
     version: '2.0.0',
     date: '2024-11-17',

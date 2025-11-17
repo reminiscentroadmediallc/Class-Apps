@@ -48,6 +48,31 @@ const initialState = {
 const migrateState = (state) => {
   if (!state) return null;
 
+  // Ensure all required properties exist
+  if (!state.pods) {
+    state.pods = {};
+  }
+  if (!state.assessments) {
+    state.assessments = [];
+  }
+  if (!state.teacherGrades) {
+    state.teacherGrades = {};
+  }
+  if (!state.selfAssessmentFormState) {
+    state.selfAssessmentFormState = {
+      selectedStudent: null,
+      step: 'select',
+      selfScores: {},
+      selfExplanations: {},
+      biggestContribution: '',
+      biggestChallenge: '',
+      peerEvaluations: {},
+      teamWorkedWell: true,
+      participationIssues: '',
+      currentPeerIndex: 0
+    };
+  }
+
   // Migration: convert old single role to roles array
   if (state.students) {
     state.students = state.students.map(s => {
