@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
-import { initialStudents, PERIOD_MAPPING } from '../data/initialStudents';
+import React, { createContext, useContext, useReducer, useEffect, useState } from 'react';
+import { initialStudents, PERIOD_MAPPING, ROLE_QUESTIONS } from '../data/initialStudents';
 
 const AppContext = createContext();
 
@@ -12,17 +12,16 @@ const initializeStudents = (rawStudents) => {
     period: PERIOD_MAPPING[student.homeroom]?.period || null,
     periodName: PERIOD_MAPPING[student.homeroom]?.name || 'Unassigned',
     podNumber: null,
-    role: null,
-    sharedRole: false,
-    sharedWith: []
+    roles: [], // Changed from single role to array of roles
+    sharedRoles: {} // { roleName: [sharedWithIds] }
   }));
 };
 
 const initialState = {
   students: initializeStudents(initialStudents),
-  pods: {}, // { period_podNumber: { id, period, podNumber, members: [studentIds], assessments: [], stage: 'not_started' } }
-  assessments: [], // { id, assessorId, assesseeId, podId, roleScores: {}, generalScores: {}, comments, timestamp }
-  teacherGrades: {}, // { studentId: { engagement: score, activity: score, comments } }
+  pods: {},
+  assessments: [],
+  teacherGrades: {},
   currentPeriod: 1,
   currentPod: null
 };
@@ -31,7 +30,27 @@ const loadState = () => {
   try {
     const saved = localStorage.getItem('podGradingState');
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      // Migration: convert old single role to roles array
+      if (parsed.students) {
+        parsed.students = parsed.students.map(s => {
+          if (s.role && !s.roles) {
+            return {
+              ...s,
+              roles: [s.role],
+              sharedRoles: s.sharedRole ? { [s.role]: s.sharedWith || [] } : {}
+            };
+          }
+          if (!s.roles) {
+            s.roles = [];
+          }
+          if (!s.sharedRoles) {
+            s.sharedRoles = {};
+          }
+          return s;
+        });
+      }
+      return parsed;
     }
   } catch (error) {
     console.error('Error loading state:', error);
@@ -58,9 +77,8 @@ const appReducer = (state, action) => {
         period: PERIOD_MAPPING[student.homeroom]?.period || null,
         periodName: PERIOD_MAPPING[student.homeroom]?.name || 'Unassigned',
         podNumber: student.podNumber || null,
-        role: student.role || null,
-        sharedRole: student.sharedRole || false,
-        sharedWith: student.sharedWith || []
+        roles: student.roles || (student.role ? [student.role] : []),
+        sharedRoles: student.sharedRoles || {}
       }));
       newState = { ...state, students: importedStudents };
       break;
@@ -72,9 +90,8 @@ const appReducer = (state, action) => {
         period: PERIOD_MAPPING[student.homeroom]?.period || null,
         periodName: PERIOD_MAPPING[student.homeroom]?.name || 'Unassigned',
         podNumber: student.podNumber || null,
-        role: student.role || null,
-        sharedRole: false,
-        sharedWith: []
+        roles: student.roles || [],
+        sharedRoles: {}
       }));
       newState = { ...state, students: [...state.students, ...newStudents] };
       break;
@@ -92,12 +109,10 @@ const appReducer = (state, action) => {
       const { studentId, podNumber, period } = action.payload;
       const podKey = `${period}_${podNumber}`;
 
-      // Update student
       const updatedStudents = state.students.map(s =>
         s.id === studentId ? { ...s, podNumber, period } : s
       );
 
-      // Create or update pod
       const existingPod = state.pods[podKey] || {
         id: podKey,
         period,
@@ -130,7 +145,7 @@ const appReducer = (state, action) => {
         ...state,
         students: state.students.map(s =>
           s.id === action.payload.studentId
-            ? { ...s, podNumber: null, role: null, sharedRole: false, sharedWith: [] }
+            ? { ...s, podNumber: null, roles: [], sharedRoles: {} }
             : s
         ),
         pods: oldPod ? {
@@ -143,16 +158,15 @@ const appReducer = (state, action) => {
       };
       break;
 
-    case 'ASSIGN_ROLE':
+    case 'ASSIGN_ROLES':
       newState = {
         ...state,
         students: state.students.map(s =>
           s.id === action.payload.studentId
             ? {
                 ...s,
-                role: action.payload.role,
-                sharedRole: action.payload.sharedRole || false,
-                sharedWith: action.payload.sharedWith || []
+                roles: action.payload.roles || [],
+                sharedRoles: action.payload.sharedRoles || {}
               }
             : s
         )
@@ -160,13 +174,11 @@ const appReducer = (state, action) => {
       break;
 
     case 'BULK_IMPORT_POD_DATA':
-      // Import format: [{ firstName, lastName, homeroom, podNumber, role }]
       const importData = action.payload;
       let studentsToUpdate = [...state.students];
       let podsToUpdate = { ...state.pods };
 
       importData.forEach(item => {
-        // Find matching student
         const studentIndex = studentsToUpdate.findIndex(s =>
           s.firstName.toUpperCase() === item.firstName.toUpperCase() &&
           s.lastName.toUpperCase() === item.lastName.toUpperCase() &&
@@ -175,23 +187,29 @@ const appReducer = (state, action) => {
 
         if (studentIndex !== -1) {
           const student = studentsToUpdate[studentIndex];
-          const period = PERIOD_MAPPING[item.homeroom]?.period;
+          const periodVal = PERIOD_MAPPING[item.homeroom]?.period;
 
-          if (period && item.podNumber) {
+          if (periodVal && item.podNumber) {
+            // Handle roles - can be comma-separated string or array
+            let rolesArray = [];
+            if (item.roles) {
+              rolesArray = Array.isArray(item.roles) ? item.roles : item.roles.split(',').map(r => r.trim());
+            } else if (item.role) {
+              rolesArray = item.role.split(',').map(r => r.trim());
+            }
+
             studentsToUpdate[studentIndex] = {
               ...student,
               podNumber: item.podNumber,
-              role: item.role || null,
-              sharedRole: item.sharedRole || false,
-              sharedWith: item.sharedWith || []
+              roles: rolesArray,
+              sharedRoles: item.sharedRoles || {}
             };
 
-            // Update pod
-            const podKey = `${period}_${item.podNumber}`;
+            const podKey = `${periodVal}_${item.podNumber}`;
             if (!podsToUpdate[podKey]) {
               podsToUpdate[podKey] = {
                 id: podKey,
-                period,
+                period: periodVal,
                 podNumber: item.podNumber,
                 members: [],
                 stage: 'not_started'
@@ -213,7 +231,7 @@ const appReducer = (state, action) => {
         ...state,
         students: state.students.map(s =>
           s.period === periodToReset
-            ? { ...s, podNumber: null, role: null, sharedRole: false, sharedWith: [] }
+            ? { ...s, podNumber: null, roles: [], sharedRoles: {} }
             : s
         ),
         pods: Object.fromEntries(
@@ -292,15 +310,25 @@ const appReducer = (state, action) => {
 
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, null, loadState);
+  const [isAdmin, setIsAdmin] = useState(() => {
+    return localStorage.getItem('podGradingAdmin') === 'true';
+  });
 
   // Auto-save on state changes
   useEffect(() => {
     saveState(state);
   }, [state]);
 
+  // Save admin status
+  useEffect(() => {
+    localStorage.setItem('podGradingAdmin', isAdmin.toString());
+  }, [isAdmin]);
+
   const value = {
     state,
     dispatch,
+    isAdmin,
+    setIsAdmin,
     // Helper functions
     getStudentsByPeriod: (period) => state.students.filter(s => s.period === period),
     getStudentById: (id) => state.students.find(s => s.id === id),
@@ -316,7 +344,7 @@ export const AppProvider = ({ children }) => {
       const student = state.students.find(s => s.id === studentId);
       if (!student) return null;
 
-      const peerAssessments = state.assessments.filter(a => a.assesseeId === studentId);
+      const peerAssessments = state.assessments.filter(a => a.assesseeId === studentId && !a.isSelfEval);
       const teacherGrade = state.teacherGrades[studentId];
 
       if (peerAssessments.length === 0 && !teacherGrade) return null;
@@ -343,16 +371,32 @@ export const AppProvider = ({ children }) => {
         teacherPercentage = (teacherTotal / 10) * 100;
       }
 
-      // Weight: 60% peer, 40% teacher
-      const finalGrade = teacherGrade
-        ? (peerPercentage * 0.6) + (teacherPercentage * 0.4)
-        : peerPercentage;
+      // Calculate bonus for multiple roles
+      const numRoles = student.roles?.length || 0;
+      let bonusPoints = 0;
+      let bonusPercentage = 0;
+
+      if (numRoles > 1) {
+        // Each additional role adds 5 bonus percentage points (capped at 15%)
+        bonusPoints = (numRoles - 1) * 5;
+        bonusPercentage = Math.min(bonusPoints, 15);
+      }
+
+      // Weight: 60% peer, 40% teacher + bonus
+      let finalGrade = teacherGrade
+        ? (peerPercentage * 0.6) + (teacherPercentage * 0.4) + bonusPercentage
+        : peerPercentage + bonusPercentage;
+
+      // Cap at 110% to allow for some bonus but not unlimited
+      finalGrade = Math.min(finalGrade, 110);
 
       return {
         peerScore: peerPercentage.toFixed(1),
         teacherScore: teacherPercentage.toFixed(1),
+        bonusPoints: bonusPercentage,
         finalGrade: finalGrade.toFixed(1),
-        assessmentCount: peerAssessments.length
+        assessmentCount: peerAssessments.length,
+        numRoles
       };
     }
   };

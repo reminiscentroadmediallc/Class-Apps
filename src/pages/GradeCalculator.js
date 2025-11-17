@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { PERIOD_MAPPING } from '../data/initialStudents';
-import { Calculator, Search, Download, BarChart3 } from 'lucide-react';
+import { Calculator, Search, Download, BarChart3, Award } from 'lucide-react';
 
 const GradeCalculator = () => {
   const { state, getStudentsByPeriod, calculateStudentGrade, getStudentAssessments } = useApp();
@@ -42,9 +42,11 @@ const GradeCalculator = () => {
       'Last Name': student.lastName,
       'Period': student.periodName,
       'Pod': student.podNumber,
-      'Role': student.role || 'N/A',
+      'Roles': student.roles?.join('; ') || 'N/A',
+      'Num Roles': student.roles?.length || 0,
       'Peer Score (%)': student.calculatedGrade?.peerScore || 'N/A',
       'Teacher Score (%)': student.calculatedGrade?.teacherScore || 'N/A',
+      'Bonus Points (%)': student.calculatedGrade?.bonusPoints || 0,
       'Final Grade (%)': student.calculatedGrade?.finalGrade || 'N/A',
       'Letter Grade': student.calculatedGrade ? getLetterGrade(parseFloat(student.calculatedGrade.finalGrade)) : 'N/A',
       'Assessments Received': student.calculatedGrade?.assessmentCount || 0
@@ -155,9 +157,10 @@ const GradeCalculator = () => {
                 <th>Rank</th>
                 <th>Student</th>
                 <th>Pod</th>
-                <th>Role</th>
+                <th>Roles</th>
                 <th>Peer Score</th>
                 <th>Teacher Score</th>
+                <th>Bonus</th>
                 <th>Final Grade</th>
                 <th>Letter</th>
                 <th>Actions</th>
@@ -176,9 +179,17 @@ const GradeCalculator = () => {
                     </td>
                     <td>Pod {student.podNumber}</td>
                     <td>
-                      <span className={student.role ? 'badge badge-primary' : 'badge badge-gray'}>
-                        {student.role || 'N/A'}
-                      </span>
+                      {student.roles && student.roles.length > 0 ? (
+                        <div style={{ fontSize: '11px' }}>
+                          {student.roles.map((role, i) => (
+                            <span key={role} className="badge badge-primary" style={{ marginRight: '4px', marginBottom: '2px', display: 'inline-block' }}>
+                              {role.split(' ')[0]}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="badge badge-gray">N/A</span>
+                      )}
                     </td>
                     <td>
                       {grade ? (
@@ -192,6 +203,15 @@ const GradeCalculator = () => {
                         <span>{grade.teacherScore}%</span>
                       ) : (
                         <span className="text-muted">Not graded</span>
+                      )}
+                    </td>
+                    <td>
+                      {grade && grade.bonusPoints > 0 ? (
+                        <span className="badge badge-success">
+                          <Award size={10} /> +{grade.bonusPoints}%
+                        </span>
+                      ) : (
+                        <span className="text-muted">-</span>
                       )}
                     </td>
                     <td>
@@ -240,11 +260,18 @@ const GradeCalculator = () => {
               <div className="alert alert-info mb-4">
                 <strong>{selectedStudent.firstName} {selectedStudent.lastName}</strong>
                 <br />
-                Pod {selectedStudent.podNumber} - {selectedStudent.role || 'No Role'}
+                Pod {selectedStudent.podNumber}
+                <br />
+                Roles: {selectedStudent.roles?.join(', ') || 'No Role'}
+                {selectedStudent.roles && selectedStudent.roles.length > 1 && (
+                  <span className="badge badge-success" style={{ marginLeft: '8px' }}>
+                    <Award size={12} /> +{(selectedStudent.roles.length - 1) * 5}% Multi-Role Bonus
+                  </span>
+                )}
               </div>
 
               {(() => {
-                const assessments = getStudentAssessments(selectedStudent.id);
+                const assessments = getStudentAssessments(selectedStudent.id).filter(a => !a.isSelfEval);
                 const teacherGrade = state.teacherGrades[selectedStudent.id];
                 const calculatedGrade = selectedStudent.calculatedGrade;
 
@@ -313,6 +340,11 @@ const GradeCalculator = () => {
                         <div style={{ marginBottom: '8px' }}>
                           <strong>Teacher Grade:</strong> {calculatedGrade.teacherScore}% (40% weight)
                         </div>
+                        {calculatedGrade.bonusPoints > 0 && (
+                          <div style={{ marginBottom: '8px', color: '#059669' }}>
+                            <strong>Multi-Role Bonus:</strong> +{calculatedGrade.bonusPoints}% ({calculatedGrade.numRoles} roles)
+                          </div>
+                        )}
                         <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#2563eb' }}>
                           Final Grade: {calculatedGrade.finalGrade}% ({getLetterGrade(parseFloat(calculatedGrade.finalGrade))})
                         </div>

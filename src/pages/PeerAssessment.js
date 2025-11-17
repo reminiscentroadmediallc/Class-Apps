@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
-import { PERIOD_MAPPING, ROLE_QUESTIONS, GENERAL_QUESTIONS, PEER_EVAL_QUESTIONS } from '../data/initialStudents';
-import { ClipboardCheck, Star, CheckCircle, AlertCircle } from 'lucide-react';
+import { PERIOD_MAPPING, ROLE_QUESTIONS, GENERAL_QUESTIONS } from '../data/initialStudents';
+import { ClipboardCheck, CheckCircle, AlertCircle, Award } from 'lucide-react';
 
 const PeerAssessment = () => {
-  const { state, dispatch, getStudentsByPeriod, getPodsByPeriod, getPodMembers, getAssessmentsGivenBy } = useApp();
+  const { state, dispatch, getPodsByPeriod, getPodMembers, getAssessmentsGivenBy } = useApp();
   const [selectedPeriod, setSelectedPeriod] = useState(1);
   const [selectedPod, setSelectedPod] = useState(null);
   const [currentAssessor, setCurrentAssessor] = useState(null);
   const [currentAssessee, setCurrentAssessee] = useState(null);
-  const [assessmentStep, setAssessmentStep] = useState('select-pod'); // select-pod, select-assessor, assess-members
+  const [assessmentStep, setAssessmentStep] = useState('select-pod');
   const [roleScores, setRoleScores] = useState({});
   const [generalScores, setGeneralScores] = useState({});
   const [comments, setComments] = useState('');
@@ -58,6 +58,17 @@ const PeerAssessment = () => {
     }
   };
 
+  const getTotalRequiredRoleQuestions = () => {
+    if (!currentAssessee || !currentAssessee.roles) return 0;
+    let total = 0;
+    currentAssessee.roles.forEach(role => {
+      if (ROLE_QUESTIONS[role]) {
+        total += ROLE_QUESTIONS[role].length;
+      }
+    });
+    return total;
+  };
+
   const handleSubmitAssessment = () => {
     const assessment = {
       assessorId: currentAssessor.id,
@@ -66,7 +77,7 @@ const PeerAssessment = () => {
       roleScores,
       generalScores,
       comments,
-      assesseeRole: currentAssessee.role
+      assesseeRoles: currentAssessee.roles || []
     };
 
     dispatch({ type: 'ADD_ASSESSMENT', payload: assessment });
@@ -77,7 +88,6 @@ const PeerAssessment = () => {
       setCurrentAssessee(toAssess[memberIndex + 1]);
       resetAssessment();
     } else {
-      // Finished assessing all members
       alert(`${currentAssessor.firstName} has completed all assessments!`);
       setCurrentAssessor(null);
       setCurrentAssessee(null);
@@ -89,9 +99,9 @@ const PeerAssessment = () => {
 
   const getCompletionStatus = (pod) => {
     const members = getPodMembers(pod.id);
-    const totalExpected = members.length * (members.length - 1); // Each member assesses all others
+    const totalExpected = members.length * (members.length - 1);
     const totalDone = members.reduce((count, member) => {
-      const given = getAssessmentsGivenBy(member.id).filter(a => a.podId === pod.id).length;
+      const given = getAssessmentsGivenBy(member.id).filter(a => a.podId === pod.id && !a.isSelfEval).length;
       return count + given;
     }, 0);
 
@@ -102,7 +112,12 @@ const PeerAssessment = () => {
     };
   };
 
-  const StarRating = ({ value, onChange, maxScore = 5 }) => (
+  const getRoleDisplay = (roles) => {
+    if (!roles || roles.length === 0) return 'No roles assigned';
+    return roles.join(', ');
+  };
+
+  const StarRating = ({ value, onChange }) => (
     <div className="star-rating">
       {[1, 2, 3, 4, 5].map(score => (
         <span
@@ -118,9 +133,8 @@ const PeerAssessment = () => {
 
   return (
     <div>
-      <h2>Peer Assessment</h2>
+      <h2>Peer Assessment (Admin)</h2>
 
-      {/* Period Selector */}
       <div className="period-selector">
         {periods.map(([homeroom, info]) => (
           <button
@@ -137,7 +151,6 @@ const PeerAssessment = () => {
         ))}
       </div>
 
-      {/* Step 1: Select Pod */}
       {assessmentStep === 'select-pod' && (
         <div className="card">
           <h3>Select a Pod to Assess</h3>
@@ -151,7 +164,7 @@ const PeerAssessment = () => {
               {currentPods.sort((a, b) => a.podNumber - b.podNumber).map(pod => {
                 const members = getPodMembers(pod.id);
                 const status = getCompletionStatus(pod);
-                const hasRoles = members.every(m => m.role);
+                const hasRoles = members.every(m => m.roles && m.roles.length > 0);
 
                 return (
                   <div key={pod.id} className="pod-card">
@@ -166,7 +179,12 @@ const PeerAssessment = () => {
                       {members.map(m => (
                         <div key={m.id} style={{ fontSize: '13px', marginLeft: '10px' }}>
                           • {m.firstName} {m.lastName}
-                          {m.role && <span className="text-muted"> - {m.role}</span>}
+                          <span className="text-muted"> - {getRoleDisplay(m.roles)}</span>
+                          {m.roles && m.roles.length > 1 && (
+                            <span className="badge badge-success" style={{ marginLeft: '4px', fontSize: '9px' }}>
+                              +{(m.roles.length - 1) * 5}%
+                            </span>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -192,7 +210,6 @@ const PeerAssessment = () => {
         </div>
       )}
 
-      {/* Step 2: Select Assessor */}
       {assessmentStep === 'select-assessor' && selectedPod && (
         <div className="card">
           <div className="flex justify-between items-center mb-4">
@@ -214,7 +231,7 @@ const PeerAssessment = () => {
 
           <div className="grid grid-2">
             {getPodMembers(selectedPod.id).map(member => {
-              const assessmentsGiven = getAssessmentsGivenBy(member.id).filter(a => a.podId === selectedPod.id).length;
+              const assessmentsGiven = getAssessmentsGivenBy(member.id).filter(a => a.podId === selectedPod.id && !a.isSelfEval).length;
               const expectedAssessments = getPodMembers(selectedPod.id).length - 1;
               const completed = assessmentsGiven >= expectedAssessments;
 
@@ -225,7 +242,7 @@ const PeerAssessment = () => {
                       {member.firstName} {member.lastName}
                     </div>
                     <div className="member-role">
-                      {member.role || 'No role assigned'}
+                      {getRoleDisplay(member.roles)}
                     </div>
                     <div style={{ marginTop: '8px' }}>
                       {completed ? (
@@ -252,7 +269,7 @@ const PeerAssessment = () => {
           </div>
 
           {getPodMembers(selectedPod.id).every(m => {
-            const given = getAssessmentsGivenBy(m.id).filter(a => a.podId === selectedPod.id).length;
+            const given = getAssessmentsGivenBy(m.id).filter(a => a.podId === selectedPod.id && !a.isSelfEval).length;
             const expected = getPodMembers(selectedPod.id).length - 1;
             return given >= expected;
           }) && (
@@ -278,7 +295,6 @@ const PeerAssessment = () => {
         </div>
       )}
 
-      {/* Step 3: Assess Members */}
       {assessmentStep === 'assess-members' && currentAssessor && currentAssessee && (
         <div className="card">
           <div className="flex justify-between items-center mb-4">
@@ -300,26 +316,35 @@ const PeerAssessment = () => {
 
           <div className="alert alert-info mb-4">
             <strong>{currentAssessor.firstName}</strong> is assessing <strong>{currentAssessee.firstName} {currentAssessee.lastName}</strong>
-            {currentAssessee.role && (
-              <span> - Role: <strong>{currentAssessee.role}</strong></span>
-            )}
-            {currentAssessee.sharedRole && (
-              <span className="text-warning"> (Shared Role)</span>
+            <br />
+            Roles: <strong>{getRoleDisplay(currentAssessee.roles)}</strong>
+            {currentAssessee.roles && currentAssessee.roles.length > 1 && (
+              <span className="badge badge-success" style={{ marginLeft: '8px' }}>
+                <Award size={12} /> +{(currentAssessee.roles.length - 1) * 5}% Multi-Role Bonus
+              </span>
             )}
           </div>
 
-          {/* Role-Specific Questions */}
-          {currentAssessee.role && ROLE_QUESTIONS[currentAssessee.role] && (
+          {/* Role-Specific Questions for ALL assigned roles */}
+          {currentAssessee.roles && currentAssessee.roles.length > 0 && (
             <div style={{ marginBottom: '24px' }}>
-              <h4 style={{ marginBottom: '16px' }}>Role-Specific Questions ({currentAssessee.role})</h4>
-              {ROLE_QUESTIONS[currentAssessee.role].map(question => (
-                <div key={question.id} className="form-group">
-                  <label>{question.text}</label>
-                  <StarRating
-                    value={roleScores[question.id] || 0}
-                    onChange={(score) => handleScoreChange(question.id, score, true)}
-                  />
-                </div>
+              {currentAssessee.roles.map(role => (
+                ROLE_QUESTIONS[role] && (
+                  <div key={role} style={{ marginBottom: '20px', padding: '16px', background: '#f0f9ff', borderRadius: '8px' }}>
+                    <h4 style={{ marginBottom: '16px', color: '#1e40af' }}>
+                      Role: {role}
+                    </h4>
+                    {ROLE_QUESTIONS[role].map(question => (
+                      <div key={`${role}_${question.id}`} className="form-group">
+                        <label>{question.text}</label>
+                        <StarRating
+                          value={roleScores[`${role}_${question.id}`] || 0}
+                          onChange={(score) => handleScoreChange(`${role}_${question.id}`, score, true)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                )
               ))}
             </div>
           )}
@@ -338,7 +363,6 @@ const PeerAssessment = () => {
             ))}
           </div>
 
-          {/* Comments */}
           <div className="form-group">
             <label>Additional Comments (Optional)</label>
             <textarea
@@ -357,7 +381,7 @@ const PeerAssessment = () => {
               className="btn btn-success btn-lg"
               onClick={handleSubmitAssessment}
               disabled={
-                (currentAssessee.role && Object.keys(roleScores).length < ROLE_QUESTIONS[currentAssessee.role]?.length) ||
+                Object.keys(roleScores).length < getTotalRequiredRoleQuestions() ||
                 Object.keys(generalScores).length < GENERAL_QUESTIONS.length
               }
             >

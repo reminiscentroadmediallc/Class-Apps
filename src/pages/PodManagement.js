@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { PERIOD_MAPPING, ROLES } from '../data/initialStudents';
-import { Users, Plus, Trash2, UserCheck, Search, Edit3 } from 'lucide-react';
+import { Users, Plus, Trash2, UserCheck, Search, Edit3, Award } from 'lucide-react';
 
 const PodManagement = () => {
   const { state, dispatch, getStudentsByPeriod, getPodsByPeriod, getPodMembers } = useApp();
@@ -10,7 +10,7 @@ const PodManagement = () => {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [showRoleModal, setShowRoleModal] = useState(false);
-  const [assignmentData, setAssignmentData] = useState({ podNumber: '', role: '', sharedRole: false, sharedWith: [] });
+  const [assignmentData, setAssignmentData] = useState({ podNumber: '', roles: [], sharedRoles: {} });
 
   const periods = Object.entries(PERIOD_MAPPING).sort((a, b) => a[1].period - b[1].period);
 
@@ -36,21 +36,20 @@ const PodManagement = () => {
       }
     });
 
-    if (assignmentData.role) {
+    if (assignmentData.roles.length > 0) {
       dispatch({
-        type: 'ASSIGN_ROLE',
+        type: 'ASSIGN_ROLES',
         payload: {
           studentId: selectedStudent.id,
-          role: assignmentData.role,
-          sharedRole: assignmentData.sharedRole,
-          sharedWith: assignmentData.sharedWith
+          roles: assignmentData.roles,
+          sharedRoles: assignmentData.sharedRoles
         }
       });
     }
 
     setShowAssignModal(false);
     setSelectedStudent(null);
-    setAssignmentData({ podNumber: '', role: '', sharedRole: false, sharedWith: [] });
+    setAssignmentData({ podNumber: '', roles: [], sharedRoles: {} });
   };
 
   const handleRemoveFromPod = (studentId) => {
@@ -62,39 +61,70 @@ const PodManagement = () => {
     }
   };
 
-  const handleUpdateRole = () => {
+  const handleUpdateRoles = () => {
     if (!selectedStudent) return;
 
     dispatch({
-      type: 'ASSIGN_ROLE',
+      type: 'ASSIGN_ROLES',
       payload: {
         studentId: selectedStudent.id,
-        role: assignmentData.role,
-        sharedRole: assignmentData.sharedRole,
-        sharedWith: assignmentData.sharedWith
+        roles: assignmentData.roles,
+        sharedRoles: assignmentData.sharedRoles
       }
     });
 
     setShowRoleModal(false);
     setSelectedStudent(null);
-    setAssignmentData({ podNumber: '', role: '', sharedRole: false, sharedWith: [] });
+    setAssignmentData({ podNumber: '', roles: [], sharedRoles: {} });
   };
 
   const openRoleModal = (student) => {
     setSelectedStudent(student);
     setAssignmentData({
       podNumber: student.podNumber,
-      role: student.role || '',
-      sharedRole: student.sharedRole || false,
-      sharedWith: student.sharedWith || []
+      roles: student.roles || [],
+      sharedRoles: student.sharedRoles || {}
     });
     setShowRoleModal(true);
   };
 
-  const getPodMembersForSharing = () => {
-    if (!selectedStudent || !selectedStudent.podNumber) return [];
-    const podKey = `${selectedPeriod}_${selectedStudent.podNumber}`;
-    return getPodMembers(podKey).filter(m => m.id !== selectedStudent.id);
+  const toggleRole = (role) => {
+    const newRoles = assignmentData.roles.includes(role)
+      ? assignmentData.roles.filter(r => r !== role)
+      : [...assignmentData.roles, role];
+
+    // Clean up sharedRoles for removed roles
+    const newSharedRoles = { ...assignmentData.sharedRoles };
+    if (!newRoles.includes(role)) {
+      delete newSharedRoles[role];
+    }
+
+    setAssignmentData({ ...assignmentData, roles: newRoles, sharedRoles: newSharedRoles });
+  };
+
+  const getRoleDisplay = (student) => {
+    if (!student.roles || student.roles.length === 0) {
+      return <span className="text-muted">No roles assigned</span>;
+    }
+
+    return (
+      <div style={{ fontSize: '12px' }}>
+        {student.roles.map((role, idx) => (
+          <span key={role}>
+            {role}
+            {student.sharedRoles && student.sharedRoles[role] && (
+              <span className="text-warning"> (Shared)</span>
+            )}
+            {idx < student.roles.length - 1 && ', '}
+          </span>
+        ))}
+        {student.roles.length > 1 && (
+          <span className="badge badge-success" style={{ marginLeft: '8px', fontSize: '10px' }}>
+            <Award size={10} /> +{(student.roles.length - 1) * 5}% Bonus
+          </span>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -156,6 +186,7 @@ const PodManagement = () => {
                     className="btn btn-primary btn-sm"
                     onClick={() => {
                       setSelectedStudent(student);
+                      setAssignmentData({ podNumber: '', roles: [], sharedRoles: {} });
                       setShowAssignModal(true);
                     }}
                   >
@@ -193,21 +224,14 @@ const PodManagement = () => {
                         <div>
                           <div className="member-name">{member.firstName} {member.lastName}</div>
                           <div className="member-role">
-                            {member.role ? (
-                              <>
-                                {member.role}
-                                {member.sharedRole && <span className="text-warning"> (Shared)</span>}
-                              </>
-                            ) : (
-                              <span className="text-muted">No role assigned</span>
-                            )}
+                            {getRoleDisplay(member)}
                           </div>
                         </div>
                         <div className="flex gap-2">
                           <button
                             className="btn btn-secondary btn-sm"
                             onClick={() => openRoleModal(member)}
-                            title="Edit Role"
+                            title="Edit Roles"
                           >
                             <Edit3 size={14} />
                           </button>
@@ -255,31 +279,29 @@ const PodManagement = () => {
               </div>
 
               <div className="form-group">
-                <label>Role (Optional)</label>
-                <select
-                  value={assignmentData.role}
-                  onChange={(e) => setAssignmentData({ ...assignmentData, role: e.target.value })}
-                >
-                  <option value="">Select a role...</option>
+                <label>Roles (Select all that apply)</label>
+                <div style={{ background: '#f9fafb', padding: '12px', borderRadius: '8px' }}>
                   {ROLES.map(role => (
-                    <option key={role} value={role}>{role}</option>
+                    <div key={role} className="checkbox-group" style={{ marginBottom: '8px' }}>
+                      <input
+                        type="checkbox"
+                        id={`assign-role-${role}`}
+                        checked={assignmentData.roles.includes(role)}
+                        onChange={() => toggleRole(role)}
+                      />
+                      <label htmlFor={`assign-role-${role}`} style={{ marginBottom: 0 }}>
+                        {role}
+                      </label>
+                    </div>
                   ))}
-                </select>
-              </div>
-
-              {assignmentData.role && (
-                <div className="form-group">
-                  <div className="checkbox-group">
-                    <input
-                      type="checkbox"
-                      id="sharedRole"
-                      checked={assignmentData.sharedRole}
-                      onChange={(e) => setAssignmentData({ ...assignmentData, sharedRole: e.target.checked })}
-                    />
-                    <label htmlFor="sharedRole" style={{ marginBottom: 0 }}>This role is shared with another team member</label>
-                  </div>
                 </div>
-              )}
+                {assignmentData.roles.length > 1 && (
+                  <div className="alert alert-success" style={{ marginTop: '10px', padding: '8px' }}>
+                    <Award size={16} />
+                    Student will receive <strong>+{(assignmentData.roles.length - 1) * 5}%</strong> bonus for taking on multiple roles!
+                  </div>
+                )}
+              </div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowAssignModal(false)}>
@@ -297,12 +319,12 @@ const PodManagement = () => {
         </div>
       )}
 
-      {/* Edit Role Modal */}
+      {/* Edit Roles Modal */}
       {showRoleModal && (
         <div className="modal-overlay">
           <div className="modal">
             <div className="modal-header">
-              <h2>Edit Role</h2>
+              <h2>Edit Roles</h2>
               <button className="close-btn" onClick={() => setShowRoleModal(false)}>&times;</button>
             </div>
             <div className="modal-body">
@@ -313,71 +335,38 @@ const PodManagement = () => {
               </div>
 
               <div className="form-group">
-                <label>Role</label>
-                <select
-                  value={assignmentData.role}
-                  onChange={(e) => setAssignmentData({ ...assignmentData, role: e.target.value })}
-                >
-                  <option value="">Select a role...</option>
+                <label>Roles (Select all that apply)</label>
+                <div style={{ background: '#f9fafb', padding: '12px', borderRadius: '8px' }}>
                   {ROLES.map(role => (
-                    <option key={role} value={role}>{role}</option>
+                    <div key={role} style={{ marginBottom: '12px' }}>
+                      <div className="checkbox-group">
+                        <input
+                          type="checkbox"
+                          id={`edit-role-${role}`}
+                          checked={assignmentData.roles.includes(role)}
+                          onChange={() => toggleRole(role)}
+                        />
+                        <label htmlFor={`edit-role-${role}`} style={{ marginBottom: 0, fontWeight: '600' }}>
+                          {role}
+                        </label>
+                      </div>
+                    </div>
                   ))}
-                </select>
-              </div>
-
-              {assignmentData.role && (
-                <>
-                  <div className="form-group">
-                    <div className="checkbox-group">
-                      <input
-                        type="checkbox"
-                        id="sharedRoleEdit"
-                        checked={assignmentData.sharedRole}
-                        onChange={(e) => setAssignmentData({ ...assignmentData, sharedRole: e.target.checked, sharedWith: [] })}
-                      />
-                      <label htmlFor="sharedRoleEdit" style={{ marginBottom: 0 }}>This role is shared with another team member</label>
-                    </div>
+                </div>
+                {assignmentData.roles.length > 1 && (
+                  <div className="alert alert-success" style={{ marginTop: '10px', padding: '8px' }}>
+                    <Award size={16} />
+                    Student will receive <strong>+{(assignmentData.roles.length - 1) * 5}%</strong> bonus for taking on {assignmentData.roles.length} roles!
                   </div>
-
-                  {assignmentData.sharedRole && (
-                    <div className="form-group">
-                      <label>Shared With:</label>
-                      {getPodMembersForSharing().map(member => (
-                        <div key={member.id} className="checkbox-group" style={{ marginBottom: '8px' }}>
-                          <input
-                            type="checkbox"
-                            id={`share-${member.id}`}
-                            checked={assignmentData.sharedWith.includes(member.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setAssignmentData({
-                                  ...assignmentData,
-                                  sharedWith: [...assignmentData.sharedWith, member.id]
-                                });
-                              } else {
-                                setAssignmentData({
-                                  ...assignmentData,
-                                  sharedWith: assignmentData.sharedWith.filter(id => id !== member.id)
-                                });
-                              }
-                            }}
-                          />
-                          <label htmlFor={`share-${member.id}`} style={{ marginBottom: 0 }}>
-                            {member.firstName} {member.lastName}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </>
-              )}
+                )}
+              </div>
             </div>
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowRoleModal(false)}>
                 Cancel
               </button>
-              <button className="btn btn-success" onClick={handleUpdateRole}>
-                Update Role
+              <button className="btn btn-success" onClick={handleUpdateRoles}>
+                Update Roles
               </button>
             </div>
           </div>
