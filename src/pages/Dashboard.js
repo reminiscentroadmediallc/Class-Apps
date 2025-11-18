@@ -1,7 +1,7 @@
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
 import { PERIOD_MAPPING } from '../data/initialStudents';
-import { Users, CheckCircle, Clock, AlertCircle, BarChart3, TrendingUp, Target, Zap } from 'lucide-react';
+import { Users, CheckCircle, Clock, AlertCircle, TrendingUp, Target, Zap } from 'lucide-react';
 
 const Dashboard = () => {
   const { state, getStudentsByPeriod, getPodsByPeriod, calculateStudentGrade } = useApp();
