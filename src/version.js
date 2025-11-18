@@ -1,10 +1,26 @@
 // Version information for the Pod Grading System
-export const VERSION = '2.1.0';
+export const VERSION = '2.2.0';
 export const BUILD_DATE = new Date().toISOString().split('T')[0];
-export const RELEASE_NAME = 'Tab Navigation & State Persistence Fixes';
+export const RELEASE_NAME = 'Master Student Management & STEM Careers';
 
 // Version history
 export const VERSION_HISTORY = [
+  {
+    version: '2.2.0',
+    date: '2024-11-17',
+    name: 'Master Student Management & STEM Careers',
+    features: [
+      'Master Student List tab for bulk editing (admin-only)',
+      'Edit homeroom, pod number, and roles for all students',
+      'Add new students with validation',
+      'Delete students (bulk or individual)',
+      'STEM Careers management for each pod',
+      'Import STEM Careers via CSV',
+      'Peer Assessment now available to all students (not just admin)',
+      'Auto-calculate period from homeroom',
+      'Clear pod/roles when changing homeroom'
+    ]
+  },
   {
     version: '2.1.0',
     date: '2024-11-17',

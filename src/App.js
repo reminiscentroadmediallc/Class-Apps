@@ -8,8 +8,10 @@ import SelfAssessment from './pages/SelfAssessment';
 import TeacherGrading from './pages/TeacherGrading';
 import ImportExport from './pages/ImportExport';
 import GradeCalculator from './pages/GradeCalculator';
+import StudentMasterList from './pages/StudentMasterList';
+import STEMCareers from './pages/STEMCareers';
 import { VERSION, RELEASE_NAME, VERSION_HISTORY } from './version';
-import { LayoutDashboard, Users, ClipboardCheck, User, GraduationCap, Upload, Calculator, Shield, ShieldOff, Lock, Info } from 'lucide-react';
+import { LayoutDashboard, Users, ClipboardCheck, User, GraduationCap, Upload, Calculator, Shield, ShieldOff, Lock, Info, Beaker } from 'lucide-react';
 
 function App() {
   const [activeTab, setActiveTab] = useState('self-assessment');
@@ -57,8 +59,10 @@ function App() {
   const allTabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: true },
     { id: 'pods', label: 'Pod Management', icon: Users, adminOnly: true },
+    { id: 'student-master-list', label: 'Master Student List', icon: Users, adminOnly: true },
     { id: 'self-assessment', label: 'Student Self-Eval', icon: User, adminOnly: false },
-    { id: 'assessment', label: 'Peer Assessment', icon: ClipboardCheck, adminOnly: true },
+    { id: 'assessment', label: 'Peer Assessment', icon: ClipboardCheck, adminOnly: false },
+    { id: 'stem-careers', label: 'STEM Careers', icon: Beaker, adminOnly: true },
     { id: 'teacher', label: 'Teacher Grading', icon: GraduationCap, adminOnly: true },
     { id: 'grades', label: 'Grade Calculator', icon: Calculator, adminOnly: true },
     { id: 'import', label: 'Import/Export', icon: Upload, adminOnly: true }
@@ -81,6 +85,12 @@ function App() {
             <PodManagement />
           </ErrorBoundary>
         );
+      case 'student-master-list':
+        return (
+          <ErrorBoundary>
+            <StudentMasterList />
+          </ErrorBoundary>
+        );
       case 'self-assessment':
         return (
           <ErrorBoundary>
@@ -91,6 +101,12 @@ function App() {
         return (
           <ErrorBoundary>
             <PeerAssessment />
+          </ErrorBoundary>
+        );
+      case 'stem-careers':
+        return (
+          <ErrorBoundary>
+            <STEMCareers />
           </ErrorBoundary>
         );
       case 'teacher':

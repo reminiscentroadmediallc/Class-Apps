@@ -28,6 +28,7 @@ const initialState = {
   pods: {},
   assessments: [],
   teacherGrades: {},
+  stemCareers: {},
   currentPeriod: 1,
   currentPod: null,
   // SelfAssessment form state - persisted between tab switches
@@ -57,6 +58,9 @@ const migrateState = (state) => {
   }
   if (!state.teacherGrades) {
     state.teacherGrades = {};
+  }
+  if (!state.stemCareers) {
+    state.stemCareers = {};
   }
   if (!state.selfAssessmentFormState) {
     state.selfAssessmentFormState = {
@@ -369,6 +373,67 @@ const appReducer = (state, action) => {
           participationIssues: '',
           currentPeerIndex: 0
         }
+      };
+      break;
+
+    case 'UPDATE_STEM_CAREER':
+      newState = {
+        ...state,
+        stemCareers: {
+          ...state.stemCareers,
+          [action.payload.podKey]: action.payload.career
+        }
+      };
+      break;
+
+    case 'IMPORT_STEM_CAREERS':
+      newState = {
+        ...state,
+        stemCareers: {
+          ...state.stemCareers,
+          ...action.payload
+        }
+      };
+      break;
+
+    case 'ADD_STUDENT':
+      newState = {
+        ...state,
+        students: [...state.students, {
+          ...action.payload,
+          id: generateId(),
+          period: PERIOD_MAPPING[action.payload.homeroom]?.period || null,
+          periodName: PERIOD_MAPPING[action.payload.homeroom]?.name || 'Unassigned',
+          podNumber: action.payload.podNumber || null,
+          roles: action.payload.roles || [],
+          sharedRoles: {}
+        }]
+      };
+      break;
+
+    case 'DELETE_STUDENT':
+      newState = {
+        ...state,
+        students: state.students.filter(s => s.id !== action.payload)
+      };
+      break;
+
+    case 'UPDATE_STUDENT_HOMEROOM':
+      newState = {
+        ...state,
+        students: state.students.map(s =>
+          s.id === action.payload.studentId
+            ? {
+                ...s,
+                homeroom: action.payload.homeroom,
+                period: PERIOD_MAPPING[action.payload.homeroom]?.period || null,
+                periodName: PERIOD_MAPPING[action.payload.homeroom]?.name || 'Unassigned',
+                podNumber: null,
+                roles: [],
+                sharedRoles: {}
+              }
+            : s
+        )
       };
       break;
 
