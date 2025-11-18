@@ -1,10 +1,28 @@
 // Version information for the Pod Grading System
-export const VERSION = '3.0.0';
+export const VERSION = '4.0.0';
 export const BUILD_DATE = new Date().toISOString().split('T')[0];
-export const RELEASE_NAME = 'Modern UI Redesign & Enhanced Dashboard';
+export const RELEASE_NAME = 'Enhanced Master Student List with Auto-Save & Bug Fixes';
 
 // Version history
 export const VERSION_HISTORY = [
+  {
+    version: '4.0.0',
+    date: '2024-11-18',
+    name: 'Enhanced Master Student List with Auto-Save & Bug Fixes',
+    features: [
+      'Fixed critical crash when saving changes to master student list',
+      'Implemented auto-save functionality (saves after 3 seconds of inactivity)',
+      'Added search/filter functionality to master student list',
+      'Added sorting by First Name, Last Name, or Homeroom (ascending/descending)',
+      'Visual row highlighting (yellow) to show which rows have been edited',
+      'Fixed issue where names would disappear while editing',
+      'Pod and role assignments now persist when changing homeroom',
+      'Save before delete feature - unsaved changes are saved before deletion',
+      'Improved UI with modern design and better visual feedback',
+      'Added count indicators for unsaved changes',
+      'Better error handling and user feedback messages'
+    ]
+  },
   {
     version: '3.0.0',
     date: '2024-11-18',
