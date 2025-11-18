@@ -120,48 +120,169 @@ const SelfAssessment = () => {
   );
 
   return (
-    <div>
-      <h2>Self & Peer Evaluation Form</h2>
+    <div style={{ background: 'linear-gradient(135deg, #f5f7fa 0%, #f0f4f8 100%)', minHeight: '100vh', paddingBottom: '40px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '32px' }}>
+        <h2 style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', marginBottom: '8px' }}>Self & Peer Evaluation Form</h2>
+        <p style={{ color: '#6b7280', fontSize: '16px' }}>Complete your honest self-assessment and peer evaluations</p>
+      </div>
 
       {step === 'select' && (
         <>
-          <div className="period-selector">
+          {/* Period Selector */}
+          <div style={{
+            display: 'flex',
+            gap: '12px',
+            marginBottom: '32px',
+            flexWrap: 'wrap'
+          }}>
             {periods.map(([homeroom, info]) => (
               <button
                 key={homeroom}
-                className={`period-btn ${selectedPeriod === info.period ? 'active' : ''}`}
                 onClick={() => setSelectedPeriod(info.period)}
+                style={{
+                  padding: '12px 20px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.3s ease',
+                  background: selectedPeriod === info.period
+                    ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
+                    : 'white',
+                  color: selectedPeriod === info.period ? 'white' : '#6b7280',
+                  boxShadow: selectedPeriod === info.period
+                    ? '0 4px 12px rgba(59, 130, 246, 0.3)'
+                    : '0 2px 4px rgba(0, 0, 0, 0.05)'
+                }}
+                onMouseEnter={(e) => {
+                  if (selectedPeriod !== info.period) {
+                    e.currentTarget.style.background = '#f3f4f6';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (selectedPeriod !== info.period) {
+                    e.currentTarget.style.background = 'white';
+                  }
+                }}
               >
                 {info.name}
               </button>
             ))}
           </div>
 
-          <div className="card">
-            <h3>Select Your Name</h3>
-            <div className="alert alert-info mb-4">
-              This form is <strong>INDIVIDUAL</strong>. Every pod member must complete their own evaluation.
+          {/* Student Selection Card */}
+          <div style={{
+            background: 'white',
+            borderRadius: '12px',
+            padding: '28px',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)'
+          }}>
+            <h3 style={{
+              fontSize: '20px',
+              fontWeight: '600',
+              color: '#1f2937',
+              marginBottom: '16px'
+            }}>Select Your Name</h3>
+
+            <div style={{
+              background: '#eff6ff',
+              border: '1px solid #93c5fd',
+              borderRadius: '8px',
+              padding: '16px',
+              marginBottom: '24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px'
+            }}>
+              <div style={{ color: '#1e40af', fontSize: '20px' }}>ℹ️</div>
+              <div>
+                <strong style={{ color: '#1e40af' }}>Individual Form</strong>
+                <p style={{ margin: '4px 0 0 0', fontSize: '14px', color: '#1e40af' }}>Every pod member must complete their own evaluation.</p>
+              </div>
             </div>
 
-            <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+            <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
               {getStudentsByPeriod(selectedPeriod).filter(s => s.podNumber).map(student => {
                 const hasCompleted = state.assessments.some(
                   a => a.assessorId === student.id && a.isSelfEval
                 );
                 return (
-                  <div key={student.id} className="member-item">
+                  <div key={student.id} style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '16px',
+                    borderRadius: '8px',
+                    border: '1px solid #e5e7eb',
+                    marginBottom: '12px',
+                    transition: 'all 0.2s ease',
+                    background: hasCompleted ? '#f9fafb' : 'white'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!hasCompleted) {
+                      e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.08)';
+                      e.currentTarget.style.borderColor = '#3b82f6';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.borderColor = '#e5e7eb';
+                  }}>
                     <div>
-                      <div className="member-name">{student.firstName} {student.lastName}</div>
-                      <div className="member-role">Pod {student.podNumber} - {student.role || 'No Role'}</div>
+                      <div style={{
+                        fontSize: '16px',
+                        fontWeight: '600',
+                        color: '#1f2937',
+                        marginBottom: '4px'
+                      }}>
+                        {student.firstName} {student.lastName}
+                      </div>
+                      <div style={{
+                        fontSize: '14px',
+                        color: '#6b7280'
+                      }}>
+                        Pod {student.podNumber} {student.role && `• ${student.role}`}
+                      </div>
                     </div>
                     {hasCompleted ? (
-                      <span className="badge badge-success">
-                        <CheckCircle size={14} /> Completed
-                      </span>
+                      <div style={{
+                        background: '#d1fae5',
+                        color: '#065f46',
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '14px',
+                        fontWeight: '500'
+                      }}>
+                        <CheckCircle size={16} /> Completed
+                      </div>
                     ) : (
                       <button
-                        className="btn btn-primary btn-sm"
                         onClick={() => handleSelectStudent(student)}
+                        style={{
+                          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          fontWeight: '600',
+                          fontSize: '14px',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 2px 4px rgba(59, 130, 246, 0.2)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 2px 4px rgba(59, 130, 246, 0.2)';
+                        }}
                       >
                         Start Evaluation
                       </button>
@@ -175,20 +296,69 @@ const SelfAssessment = () => {
       )}
 
       {step === 'self-eval' && selectedStudent && (
-        <div className="card">
-          <div className="flex justify-between items-center mb-4">
-            <h3>Part 1: Self-Evaluation</h3>
-            <button className="btn btn-secondary" onClick={() => updateFormState({ step: 'select' })}>
+        <div style={{
+          background: 'white',
+          borderRadius: '12px',
+          padding: '28px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
+          maxWidth: '800px',
+          margin: '0 auto'
+        }}>
+          {/* Header with back button */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '24px',
+            paddingBottom: '16px',
+            borderBottom: '2px solid #e5e7eb'
+          }}>
+            <div>
+              <h3 style={{ fontSize: '20px', fontWeight: '600', color: '#1f2937', margin: '0' }}>Part 1: Self-Evaluation</h3>
+              <p style={{ color: '#6b7280', fontSize: '14px', margin: '4px 0 0 0' }}>Assess your own performance</p>
+            </div>
+            <button
+              onClick={() => updateFormState({ step: 'select' })}
+              style={{
+                background: '#f3f4f6',
+                border: '1px solid #d1d5db',
+                padding: '8px 16px',
+                borderRadius: '6px',
+                color: '#374151',
+                fontWeight: '600',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#e5e7eb';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = '#f3f4f6';
+              }}
+            >
               Back
             </button>
           </div>
 
-          <div className="alert alert-info mb-4">
-            <strong>{selectedStudent.firstName} {selectedStudent.lastName}</strong><br />
-            Pod {selectedStudent.podNumber} - {selectedStudent.role || 'No Role'}
+          {/* Student Info Box */}
+          <div style={{
+            background: 'linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%)',
+            border: '1px solid #93c5fd',
+            borderRadius: '8px',
+            padding: '16px',
+            marginBottom: '28px'
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: '600', color: '#1e40af' }}>
+              {selectedStudent.firstName} {selectedStudent.lastName}
+            </div>
+            <div style={{ fontSize: '14px', color: '#1e40af', marginTop: '4px' }}>
+              Pod {selectedStudent.podNumber} {selectedStudent.role && `• ${selectedStudent.role}`}
+            </div>
           </div>
 
-          <p className="mb-4">Be honest about your own performance. (1 = Strongly Disagree, 5 = Strongly Agree)</p>
+          <p style={{ color: '#6b7280', marginBottom: '24px', fontSize: '14px' }}>
+            Be honest about your own performance. (1 = Strongly Disagree, 5 = Strongly Agree)
+          </p>
 
           {SELF_EVAL_QUESTIONS.map(question => (
             <div key={question.id} className="form-group" style={{ marginBottom: '24px' }}>
