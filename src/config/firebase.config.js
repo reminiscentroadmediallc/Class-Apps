@@ -1,15 +1,15 @@
 // Firebase configuration
-// Replace these values with your actual Firebase project config
 // Get these from: Firebase Console > Project Settings > General > Your apps > Web app
 
 const firebaseConfig = {
-  apiKey: process.env.REACT_APP_FIREBASE_API_KEY || "YOUR_API_KEY",
-  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN || "YOUR_PROJECT.firebaseapp.com",
-  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID || "YOUR_PROJECT_ID",
-  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET || "YOUR_PROJECT.appspot.com",
-  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID || "YOUR_SENDER_ID",
-  appId: process.env.REACT_APP_FIREBASE_APP_ID || "YOUR_APP_ID",
-  databaseURL: process.env.REACT_APP_FIREBASE_DATABASE_URL || "https://YOUR_PROJECT.firebaseio.com"
+  apiKey: "AIzaSyBgLO7DpoVS3sTZMgmnpcnfX8ZYZT2_dOo",
+  authDomain: "science-games-fueds.firebaseapp.com",
+  projectId: "science-games-fueds",
+  storageBucket: "science-games-fueds.firebasestorage.app",
+  messagingSenderId: "518028106219",
+  appId: "1:518028106219:web:c92f93c7249ba621cae1ae",
+  databaseURL: "https://science-games-fueds-default-rtdb.firebaseio.com",
+  measurementId: "G-7BLG5YGKZR"
 };
 
 export default firebaseConfig;
