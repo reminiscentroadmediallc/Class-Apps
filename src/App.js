@@ -21,6 +21,19 @@ function App() {
   const [password, setPassword] = useState('');
   const [loginError, setLoginError] = useState('');
 
+  // Define tabs with admin restrictions - MUST be before useEffect that references it
+  const allTabs = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: true },
+    { id: 'pods', label: 'Pod Management', icon: Users, adminOnly: true },
+    { id: 'student-master-list', label: 'Master Student List', icon: Users, adminOnly: true },
+    { id: 'self-assessment', label: 'Student Self-Eval', icon: User, adminOnly: false },
+    { id: 'assessment', label: 'Peer Assessment', icon: ClipboardCheck, adminOnly: false },
+    { id: 'stem-careers', label: 'STEM Careers', icon: Beaker, adminOnly: true },
+    { id: 'teacher', label: 'Teacher Grading', icon: GraduationCap, adminOnly: true },
+    { id: 'grades', label: 'Grade Calculator', icon: Calculator, adminOnly: true },
+    { id: 'import', label: 'Import/Export', icon: Upload, adminOnly: true }
+  ];
+
   // Log version on mount
   useEffect(() => {
     console.log(`App loaded: v${VERSION} - ${RELEASE_NAME}`);
@@ -54,19 +67,6 @@ function App() {
     // Reset to student view
     setActiveTab('self-assessment');
   };
-
-  // Define tabs with admin restrictions
-  const allTabs = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: true },
-    { id: 'pods', label: 'Pod Management', icon: Users, adminOnly: true },
-    { id: 'student-master-list', label: 'Master Student List', icon: Users, adminOnly: true },
-    { id: 'self-assessment', label: 'Student Self-Eval', icon: User, adminOnly: false },
-    { id: 'assessment', label: 'Peer Assessment', icon: ClipboardCheck, adminOnly: false },
-    { id: 'stem-careers', label: 'STEM Careers', icon: Beaker, adminOnly: true },
-    { id: 'teacher', label: 'Teacher Grading', icon: GraduationCap, adminOnly: true },
-    { id: 'grades', label: 'Grade Calculator', icon: Calculator, adminOnly: true },
-    { id: 'import', label: 'Import/Export', icon: Upload, adminOnly: true }
-  ];
 
   // Filter tabs based on admin status
   const visibleTabs = allTabs.filter(tab => !tab.adminOnly || isAdmin);
