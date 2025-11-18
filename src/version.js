@@ -1,10 +1,24 @@
 // Version information for the Pod Grading System
-export const VERSION = '4.1.0';
+export const VERSION = '4.2.0';
 export const BUILD_DATE = new Date().toISOString().split('T')[0];
-export const RELEASE_NAME = 'Pod Management Crash Fix & Dashboard Refinement';
+export const RELEASE_NAME = 'STEM Careers Performance Fix & Dashboard Refinement';
 
 // Version history
 export const VERSION_HISTORY = [
+  {
+    version: '4.2.0',
+    date: '2024-11-18',
+    name: 'STEM Careers Performance Fix & Dashboard Refinement',
+    features: [
+      'Fixed freezing issue in STEM Careers tab when typing - memoized expensive calculations',
+      'Optimized component rendering to prevent recalculation on every keystroke',
+      'Improved dashboard metric cards - smaller, more refined proportions',
+      'Reduced card size: padding 20px/16px, minHeight 140px, font size 28px for numbers',
+      'Reduced card gap from 28px to 16px for better visual balance',
+      'Refined box shadows from 4px to 2px for more subtle appearance',
+      'Smaller card border radius (10px) and icon sizes (20px) for refined look'
+    ]
+  },
   {
     version: '4.1.0',
     date: '2024-11-18',

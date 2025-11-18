@@ -103,20 +103,20 @@ const Dashboard = () => {
       {/* Key Metrics - Modern Cards */}
       <div className="grid grid-4" style={{
         marginBottom: '40px',
-        gap: '28px',
-        padding: '0 8px'
+        gap: '16px',
+        padding: '0 4px'
       }}>
         {/* Total Students */}
         <div style={{
           background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-          borderRadius: '12px',
-          padding: '32px 28px',
+          borderRadius: '10px',
+          padding: '20px 16px',
           color: 'white',
-          boxShadow: '0 4px 15px rgba(59, 130, 246, 0.15)',
+          boxShadow: '0 2px 8px rgba(59, 130, 246, 0.2)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '180px',
+          minHeight: '140px',
           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           cursor: 'pointer'
         }}
@@ -128,25 +128,25 @@ const Dashboard = () => {
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow = '0 4px 15px rgba(59, 130, 246, 0.15)';
         }}>
-          <div style={{ fontSize: '14px', opacity: '0.9', fontWeight: '500' }}>Total Students</div>
+          <div style={{ fontSize: '12px', opacity: '0.9', fontWeight: '500' }}>Total Students</div>
           <div>
-            <div style={{ fontSize: '36px', fontWeight: '700', marginBottom: '8px' }}>{stats.totalStudents}</div>
-            <div style={{ fontSize: '13px', opacity: '0.85' }}>Registered in system</div>
+            <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{stats.totalStudents}</div>
+            <div style={{ fontSize: '11px', opacity: '0.85' }}>Registered in system</div>
           </div>
-          <Users size={24} style={{ opacity: '0.6' }} />
+          <Users size={20} style={{ opacity: '0.5' }} />
         </div>
 
         {/* Students in Pods */}
         <div style={{
           background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-          borderRadius: '12px',
-          padding: '32px 28px',
+          borderRadius: '10px',
+          padding: '20px 16px',
           color: 'white',
-          boxShadow: '0 4px 15px rgba(16, 185, 129, 0.15)',
+          boxShadow: '0 2px 8px rgba(16, 185, 129, 0.2)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '180px',
+          minHeight: '140px',
           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           cursor: 'pointer'
         }}
@@ -158,16 +158,16 @@ const Dashboard = () => {
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.15)';
         }}>
-          <div style={{ fontSize: '14px', opacity: '0.9', fontWeight: '500' }}>Pod Assignment</div>
+          <div style={{ fontSize: '12px', opacity: '0.9', fontWeight: '500' }}>Pod Assignment</div>
           <div>
-            <div style={{ fontSize: '36px', fontWeight: '700', marginBottom: '8px' }}>{stats.studentsInPods}</div>
-            <div style={{ fontSize: '13px', opacity: '0.85' }}>{podsCompletionPercent}% of students</div>
+            <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{stats.studentsInPods}</div>
+            <div style={{ fontSize: '11px', opacity: '0.85' }}>{podsCompletionPercent}% of students</div>
           </div>
           <div style={{
             background: 'rgba(255, 255, 255, 0.2)',
-            height: '4px',
+            height: '3px',
             borderRadius: '2px',
-            marginTop: '8px',
+            marginTop: '6px',
             overflow: 'hidden'
           }}>
             <div style={{
@@ -182,14 +182,14 @@ const Dashboard = () => {
         {/* Peer Assessments */}
         <div style={{
           background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-          borderRadius: '12px',
-          padding: '32px 28px',
+          borderRadius: '10px',
+          padding: '20px 16px',
           color: 'white',
-          boxShadow: '0 4px 15px rgba(245, 158, 11, 0.15)',
+          boxShadow: '0 2px 8px rgba(245, 158, 11, 0.2)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '180px',
+          minHeight: '140px',
           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           cursor: 'pointer'
         }}
@@ -201,25 +201,25 @@ const Dashboard = () => {
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow = '0 4px 15px rgba(245, 158, 11, 0.15)';
         }}>
-          <div style={{ fontSize: '14px', opacity: '0.9', fontWeight: '500' }}>Peer Assessments</div>
+          <div style={{ fontSize: '12px', opacity: '0.9', fontWeight: '500' }}>Peer Assessments</div>
           <div>
-            <div style={{ fontSize: '36px', fontWeight: '700', marginBottom: '8px' }}>{stats.totalAssessments}</div>
-            <div style={{ fontSize: '13px', opacity: '0.85' }}>{assessmentCompletionPercent}% target</div>
+            <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{stats.totalAssessments}</div>
+            <div style={{ fontSize: '11px', opacity: '0.85' }}>{assessmentCompletionPercent}% target</div>
           </div>
-          <Zap size={24} style={{ opacity: '0.6' }} />
+          <Zap size={20} style={{ opacity: '0.5' }} />
         </div>
 
         {/* Teacher Grades */}
         <div style={{
           background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
-          borderRadius: '12px',
-          padding: '32px 28px',
+          borderRadius: '10px',
+          padding: '20px 16px',
           color: 'white',
-          boxShadow: '0 4px 15px rgba(139, 92, 246, 0.15)',
+          boxShadow: '0 2px 8px rgba(139, 92, 246, 0.2)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '180px',
+          minHeight: '140px',
           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           cursor: 'pointer'
         }}
@@ -231,16 +231,16 @@ const Dashboard = () => {
           e.currentTarget.style.transform = 'translateY(0)';
           e.currentTarget.style.boxShadow = '0 4px 15px rgba(139, 92, 246, 0.15)';
         }}>
-          <div style={{ fontSize: '14px', opacity: '0.9', fontWeight: '500' }}>Teacher Grades</div>
+          <div style={{ fontSize: '12px', opacity: '0.9', fontWeight: '500' }}>Teacher Grades</div>
           <div>
-            <div style={{ fontSize: '36px', fontWeight: '700', marginBottom: '8px' }}>{stats.studentsGraded}</div>
-            <div style={{ fontSize: '13px', opacity: '0.85' }}>{gradeCompletionPercent}% complete</div>
+            <div style={{ fontSize: '28px', fontWeight: '700', marginBottom: '4px' }}>{stats.studentsGraded}</div>
+            <div style={{ fontSize: '11px', opacity: '0.85' }}>{gradeCompletionPercent}% complete</div>
           </div>
           <div style={{
             background: 'rgba(255, 255, 255, 0.2)',
-            height: '4px',
+            height: '3px',
             borderRadius: '2px',
-            marginTop: '8px',
+            marginTop: '6px',
             overflow: 'hidden'
           }}>
             <div style={{

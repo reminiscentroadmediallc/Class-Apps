@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { PERIOD_MAPPING, ROLES } from '../data/initialStudents';
 import { Plus, Trash2, Save, AlertCircle, ChevronUp, ChevronDown, Search } from 'lucide-react';
@@ -210,37 +210,41 @@ const StudentMasterList = () => {
     );
   };
 
-  // Filter and sort students
-  let filteredStudents = state.students.filter(s =>
-    s.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    s.homeroom?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Memoize filtered and sorted students to prevent recalculation on every keystroke
+  const filteredStudents = useMemo(() => {
+    let result = state.students.filter(s =>
+      s.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      s.homeroom?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
-  // Sort students
-  filteredStudents.sort((a, b) => {
-    let aVal, bVal;
+    // Sort students
+    result.sort((a, b) => {
+      let aVal, bVal;
 
-    switch (sortBy) {
-      case 'firstName':
-        aVal = a.firstName.toLowerCase();
-        bVal = b.firstName.toLowerCase();
-        break;
-      case 'lastName':
-        aVal = a.lastName.toLowerCase();
-        bVal = b.lastName.toLowerCase();
-        break;
-      case 'homeroom':
-        aVal = a.homeroom?.toLowerCase() || '';
-        bVal = b.homeroom?.toLowerCase() || '';
-        break;
-      default:
-        return 0;
-    }
+      switch (sortBy) {
+        case 'firstName':
+          aVal = a.firstName.toLowerCase();
+          bVal = b.firstName.toLowerCase();
+          break;
+        case 'lastName':
+          aVal = a.lastName.toLowerCase();
+          bVal = b.lastName.toLowerCase();
+          break;
+        case 'homeroom':
+          aVal = a.homeroom?.toLowerCase() || '';
+          bVal = b.homeroom?.toLowerCase() || '';
+          break;
+        default:
+          return 0;
+      }
 
-    const comparison = aVal.localeCompare(bVal);
-    return sortOrder === 'asc' ? comparison : -comparison;
-  });
+      const comparison = aVal.localeCompare(bVal);
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return result;
+  }, [state.students, searchTerm, sortBy, sortOrder]);
 
   const hasChanges = Object.keys(editingStudents).length > 0;
 

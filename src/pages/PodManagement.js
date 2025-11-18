@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { PERIOD_MAPPING, ROLES } from '../data/initialStudents';
 import { Users, Plus, Trash2, UserCheck, Search, Edit3, Award } from 'lucide-react';
@@ -14,15 +14,28 @@ const PodManagement = () => {
 
   const periods = Object.entries(PERIOD_MAPPING).sort((a, b) => a[1].period - b[1].period);
 
-  const currentPeriodStudents = getStudentsByPeriod(selectedPeriod);
-  const currentPods = getPodsByPeriod(selectedPeriod);
-
-  const filteredStudents = currentPeriodStudents.filter(s =>
-    `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+  const currentPeriodStudents = useMemo(
+    () => getStudentsByPeriod(selectedPeriod),
+    [selectedPeriod]
   );
 
-  const unassignedStudents = filteredStudents.filter(s => !s.podNumber);
-  const assignedStudents = filteredStudents.filter(s => s.podNumber);
+  const currentPods = useMemo(
+    () => getPodsByPeriod(selectedPeriod),
+    [selectedPeriod]
+  );
+
+  // Memoize expensive chained filter operations
+  const { filteredStudents, unassignedStudents, assignedStudents } = useMemo(() => {
+    const filtered = currentPeriodStudents.filter(s =>
+      `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return {
+      filteredStudents: filtered,
+      unassignedStudents: filtered.filter(s => !s.podNumber),
+      assignedStudents: filtered.filter(s => s.podNumber)
+    };
+  }, [currentPeriodStudents, searchTerm]);
 
   const handleAssignPod = () => {
     if (!selectedStudent || !assignmentData.podNumber) return;

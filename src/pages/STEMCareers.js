@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { PERIOD_MAPPING } from '../data/initialStudents';
 import { Save, Upload, AlertCircle } from 'lucide-react';
@@ -101,9 +101,38 @@ const STEMCareers = () => {
     reader.readAsText(file);
   };
 
-  const periods = Object.entries(PERIOD_MAPPING)
-    .sort((a, b) => a[1].period - b[1].period)
-    .map(([code, info]) => ({ code, ...info }));
+  const periods = useMemo(
+    () => Object.entries(PERIOD_MAPPING)
+      .sort((a, b) => a[1].period - b[1].period)
+      .map(([code, info]) => ({ code, ...info })),
+    []
+  );
+
+  // Memoize pod data to prevent expensive recalculations on every keystroke
+  const periodPodsData = useMemo(() => {
+    const data = {};
+    periods.forEach(period => {
+      const podsInPeriod = Array.from(new Set(
+        state.students
+          .filter(s => s.period === period.period && s.podNumber)
+          .map(s => s.podNumber)
+      )).sort((a, b) => a - b);
+
+      data[period.period] = {
+        pods: podsInPeriod,
+        podDetails: {}
+      };
+
+      podsInPeriod.forEach(podNum => {
+        const podKey = `${period.period}_${podNum}`;
+        const podMembers = state.students.filter(s => s.period === period.period && s.podNumber === podNum);
+        data[period.period].podDetails[podKey] = {
+          members: podMembers
+        };
+      });
+    });
+    return data;
+  }, [state.students, periods]);
 
   const hasChanges = Object.keys(editingCareers).length > 0;
 
@@ -146,12 +175,8 @@ const STEMCareers = () => {
       </div>
 
       {periods.map(period => {
-        // Get all pods for this period
-        const podsInPeriod = Array.from(new Set(
-          state.students
-            .filter(s => s.period === period.period && s.podNumber)
-            .map(s => s.podNumber)
-        )).sort((a, b) => a - b);
+        const periodData = periodPodsData[period.period];
+        const podsInPeriod = periodData?.pods || [];
 
         if (podsInPeriod.length === 0) {
           return null;
@@ -163,7 +188,7 @@ const STEMCareers = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '15px' }}>
               {podsInPeriod.map(podNum => {
                 const podKey = `${period.period}_${podNum}`;
-                const podMembers = state.students.filter(s => s.period === period.period && s.podNumber === podNum);
+                const podMembers = periodData.podDetails[podKey]?.members || [];
                 const currentCareer = editingCareers[podKey] ?? state.stemCareers[podKey] ?? '';
 
                 return (

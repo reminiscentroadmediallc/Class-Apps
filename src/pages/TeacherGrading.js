@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useApp } from '../contexts/AppContext';
 import { PERIOD_MAPPING } from '../data/initialStudents';
 import { GraduationCap, Search, CheckCircle, Save } from 'lucide-react';
@@ -13,14 +13,23 @@ const TeacherGrading = () => {
 
   const periods = Object.entries(PERIOD_MAPPING).sort((a, b) => a[1].period - b[1].period);
 
-  const currentPeriodStudents = getStudentsByPeriod(selectedPeriod).filter(s => s.podNumber);
-
-  const filteredStudents = currentPeriodStudents.filter(s =>
-    `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+  const currentPeriodStudents = useMemo(
+    () => getStudentsByPeriod(selectedPeriod).filter(s => s.podNumber),
+    [selectedPeriod, getStudentsByPeriod]
   );
 
-  const gradedStudents = filteredStudents.filter(s => state.teacherGrades[s.id]);
-  const ungradedStudents = filteredStudents.filter(s => !state.teacherGrades[s.id]);
+  // Memoize expensive chained filter operations
+  const { filteredStudents, gradedStudents, ungradedStudents } = useMemo(() => {
+    const filtered = currentPeriodStudents.filter(s =>
+      `${s.firstName} ${s.lastName}`.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    return {
+      filteredStudents: filtered,
+      gradedStudents: filtered.filter(s => state.teacherGrades[s.id]),
+      ungradedStudents: filtered.filter(s => !state.teacherGrades[s.id])
+    };
+  }, [currentPeriodStudents, searchTerm, state.teacherGrades]);
 
   const handleOpenGrading = (student) => {
     setSelectedStudent(student);
