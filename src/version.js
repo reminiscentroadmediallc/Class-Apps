@@ -1,10 +1,23 @@
 // Version information for the Pod Grading System
-export const VERSION = '4.0.0';
+export const VERSION = '4.1.0';
 export const BUILD_DATE = new Date().toISOString().split('T')[0];
-export const RELEASE_NAME = 'Enhanced Master Student List with Auto-Save & Bug Fixes';
+export const RELEASE_NAME = 'Pod Management Crash Fix & Dashboard Refinement';
 
 // Version history
 export const VERSION_HISTORY = [
+  {
+    version: '4.1.0',
+    date: '2024-11-18',
+    name: 'Pod Management Crash Fix & Dashboard Refinement',
+    features: [
+      'Fixed crash in Pod Management when updating pod stages without existing pod data',
+      'Improved dashboard card spacing and padding for better visual separation',
+      'Increased dashboard card height for improved content readability',
+      'Added safety checks in state reducer to prevent undefined pod access',
+      'Refined grid gap spacing for metric cards (increased from 20px to 28px)',
+      'Enhanced card padding (32px top/bottom, 28px left/right) for better breathing room'
+    ]
+  },
   {
     version: '4.0.0',
     date: '2024-11-18',

@@ -101,18 +101,22 @@ const Dashboard = () => {
       </div>
 
       {/* Key Metrics - Modern Cards */}
-      <div className="grid grid-4" style={{ marginBottom: '40px', gap: '20px' }}>
+      <div className="grid grid-4" style={{
+        marginBottom: '40px',
+        gap: '28px',
+        padding: '0 8px'
+      }}>
         {/* Total Students */}
         <div style={{
           background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
           borderRadius: '12px',
-          padding: '24px',
+          padding: '32px 28px',
           color: 'white',
           boxShadow: '0 4px 15px rgba(59, 130, 246, 0.15)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '160px',
+          minHeight: '180px',
           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           cursor: 'pointer'
         }}
@@ -136,13 +140,13 @@ const Dashboard = () => {
         <div style={{
           background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
           borderRadius: '12px',
-          padding: '24px',
+          padding: '32px 28px',
           color: 'white',
           boxShadow: '0 4px 15px rgba(16, 185, 129, 0.15)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '160px',
+          minHeight: '180px',
           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           cursor: 'pointer'
         }}
@@ -179,13 +183,13 @@ const Dashboard = () => {
         <div style={{
           background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
           borderRadius: '12px',
-          padding: '24px',
+          padding: '32px 28px',
           color: 'white',
           boxShadow: '0 4px 15px rgba(245, 158, 11, 0.15)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '160px',
+          minHeight: '180px',
           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           cursor: 'pointer'
         }}
@@ -209,13 +213,13 @@ const Dashboard = () => {
         <div style={{
           background: 'linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%)',
           borderRadius: '12px',
-          padding: '24px',
+          padding: '32px 28px',
           color: 'white',
           boxShadow: '0 4px 15px rgba(139, 92, 246, 0.15)',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          minHeight: '160px',
+          minHeight: '180px',
           transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           cursor: 'pointer'
         }}

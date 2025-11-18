@@ -297,16 +297,22 @@ const appReducer = (state, action) => {
 
     case 'UPDATE_POD_STAGE':
       const podKeyToUpdate = action.payload.podKey;
-      newState = {
-        ...state,
-        pods: {
-          ...state.pods,
-          [podKeyToUpdate]: {
-            ...state.pods[podKeyToUpdate],
-            stage: action.payload.stage
+      // Safety check: only update if pod exists
+      if (state.pods[podKeyToUpdate]) {
+        newState = {
+          ...state,
+          pods: {
+            ...state.pods,
+            [podKeyToUpdate]: {
+              ...state.pods[podKeyToUpdate],
+              stage: action.payload.stage
+            }
           }
-        }
-      };
+        };
+      } else {
+        // Pod doesn't exist yet, ignore the update
+        newState = state;
+      }
       break;
 
     case 'ADD_TEACHER_GRADE':
