@@ -48,8 +48,8 @@ function App() {
     }
   }, [activeTab, isAdmin, allTabs]);
 
-  // Admin password - in production, this should be handled server-side
-  const ADMIN_PASSWORD = 'TSA2025';
+  // Admin password from environment variable
+  const ADMIN_PASSWORD = process.env.REACT_APP_ADMIN_PASSWORD || 'TSA2025';
 
   const handleLogin = () => {
     if (password === ADMIN_PASSWORD) {
